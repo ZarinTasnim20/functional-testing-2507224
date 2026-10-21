@@ -40,8 +40,16 @@ document.querySelectorAll("form.card").forEach(form => {
     while (inputs.length && inputs[inputs.length-1].value === "") inputs.pop();
     const args = inputs.map(i => i.value);
     const out = form.querySelector(".out");
-    const r = await fetch(`/api/run/${form.dataset.fn}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({args})});
-    const d = await r.json();
+    out.className = "out"; out.textContent = "running...";
+    let d;
+    try {
+      const r = await fetch(`/api/run/${form.dataset.fn}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({args})});
+      d = await r.json();
+    } catch (err) {
+      out.className = "out err";
+      out.textContent = "Can't reach the server. Is python app.py still running?";
+      return;
+    }
     out.className = "out " + (d.ok ? "ok" : "err");
     out.textContent = d.ok ? `→ ${d.result}  (${d.type})` : `${d.error}: ${d.message}`;
   });
