@@ -64,14 +64,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      LIVE_URL: ${{ vars.LIVE_URL }}
+      LIVE_URL: ${{ vars.LIVE_URL || 'https://functional-testing-2507224.onrender.com' }}
     steps:
       - name: Wait for the new commit SHA on the live site
         run: |
+          LIVE_URL=$(echo "$LIVE_URL" | tr -d '[:space:]'); LIVE_URL=${LIVE_URL%/}
+          echo "LIVE_URL=$LIVE_URL"; echo "LIVE_URL=$LIVE_URL" >> "$GITHUB_ENV"
           for i in $(seq 1 60); do
-            live=$(curl -sS --max-time 30 "$LIVE_URL/health" \
-              | python3 -c "import sys,json;print(json.load(sys.stdin)['sha'])" 2>/dev/null || true)
-            echo "attempt $i: live sha=$live expected=$GITHUB_SHA"
+            body=$(curl -sS -A "Mozilla/5.0 smoke-test" --max-time 30 "$LIVE_URL/health" || true)
+            echo "attempt $i: $body"
+            live=$(echo "$body" | python3 -c "import sys,json;print(json.load(sys.stdin)['sha'])" 2>/dev/null || true)
+            echo "live sha=$live expected=$GITHUB_SHA"
             if [ "$live" = "$GITHUB_SHA" ]; then exit 0; fi
             sleep 10
           done
