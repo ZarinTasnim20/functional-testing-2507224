@@ -1,17 +1,17 @@
-# functional-testing-&lt;student-id&gt;
+# functional-testing-2507224
 
-![CI](https://github.com/<your-username>/functional-testing-<student-id>/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/ZarinTasnim20/functional-testing-2507224/actions/workflows/ci.yml/badge.svg)
 
 Functional tests, CI/CD and live deployment for `target.py` (16 functions: 11 data-type, 5 maths).
 
-**Live URL:** https://<your-app>.onrender.com
-**Health:** https://<your-app>.onrender.com/health (returns the deployed commit SHA)
+**Live URL:** https://functional-testing-2507224.onrender.com
+**Health:** https://functional-testing-2507224.onrender.com/health (returns the deployed commit SHA)
 
 ## Setup
 
 ```bash
-git clone https://github.com/<your-username>/functional-testing-<student-id>.git
-cd functional-testing-<student-id>
+git clone https://github.com/ZarinTasnim20/functional-testing-2507224.git
+cd functional-testing-2507224
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
