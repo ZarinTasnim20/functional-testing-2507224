@@ -40,6 +40,10 @@ Each of the 16 functions has a card: type Python values (`18`, `None`, `[1, 2]`,
 2. **deploy** (`needs: test`): only on pushes to `main`. Calls the Render deploy hook stored in the `RENDER_DEPLOY_HOOK` GitHub secret. Auto-deploy is off on Render, so nothing goes live unless the tests pass.
 3. **smoke-test** (`needs: deploy`): polls `/health` until the live SHA matches `GITHUB_SHA`, then checks three live requests (home page, a successful call, an error call).
 
+## Branch workflow
+
+`main` is protected: changes go in through pull requests from feature branches, and a PR can only be merged when the `test` jobs (Python 3.10, 3.11 and 3.12) have passed. Merging to `main` triggers the deploy and the smoke-test.
+
 ## Suspected bugs in target.py
 
 `target.py` has not been modified. These are behaviours that look wrong or are unspecified:
