@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Run tests (fail below 100% coverage of target.py)
+        run: >
+          pytest tests/test_target.py
+          --cov=target --cov-branch
+          --cov-report=term-missing --cov-report=xml --cov-report=html
+          --cov-fail-under=100
+
+      - name: Test frontend
+        run: pytest tests/test_app.py
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+
+  deploy:
+    name: deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy of this commit
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -fsS -X POST "${RENDER_DEPLOY_HOOK}&ref=${GITHUB_SHA}"
+
+  smoke-test:
+    name: smoke-test
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      LIVE_URL: ${{ vars.LIVE_URL }}
+    steps:
+      - name: Wait for the new commit SHA on the live site
+        run: |
+          for i in $(seq 1 60); do
+            live=$(curl -fsS "$LIVE_URL/health" | python3 -c "import sys,json;print(json.load(sys.stdin)['sha'])" || true)
+            echo "attempt $i: live sha=$live expected=$GITHUB_SHA"
+            if [ "$live" = "$GITHUB_SHA" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "New SHA never went live"; exit 1
+
+      - name: Check three live requests
+        run: |
+          set -e
+          curl -fsS "$LIVE_URL/" | grep -q "target.py playground"
+          curl -fsS -X POST "$LIVE_URL/api/run/is_adult" -H "Content-Type: application/json" \
+            -d '{"args":["18"]}' | grep -q '"result":"True"'
+          curl -fsS -X POST "$LIVE_URL/api/run/divide" -H "Content-Type: application/json" \
+            -d '{"args":["1","0"]}' | grep -q 'ZeroDivisionError'
+          echo "All 3 live checks passed"
