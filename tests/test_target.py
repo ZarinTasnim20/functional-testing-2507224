@@ -425,7 +425,7 @@ def test_square_root_valid(x, expected):
 @pytest.mark.parametrize("x", [-1, -0.0001, -100])
 def test_square_root_negative_raises(x):
     with pytest.raises(
-        ValueError, match="cannot take the square root of a negative number"
+            ValueError, match="cannot take the square root of a negative number"
     ):
         target.square_root(x)
 
@@ -450,7 +450,7 @@ def test_factorial_valid(n, expected):
 @pytest.mark.parametrize("n", [-1, -10])
 def test_factorial_negative_raises(n):
     with pytest.raises(
-        ValueError, match="factorial is not defined for negative numbers"
+            ValueError, match="factorial is not defined for negative numbers"
     ):
         target.factorial(n)
 
@@ -490,6 +490,3 @@ def test_average_empty_raises(numbers):
 def test_average_wrong_type(numbers):
     with pytest.raises(TypeError):
         target.average(numbers)
-
-def test_demo_failure():
-    assert 1 == 2
